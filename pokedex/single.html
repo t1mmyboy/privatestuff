@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokedex</title>
+  <link rel="stylesheet" href="single.css">
+</head>
+<body>
+  <header>
+    <a href="#" onclick="history.back()">Home</a>
+    Pokedex
+  </header>
+
+  <div id="pokedex-container">
+    <div id="pokemon-details" class="pokemon-card">
+      <!-- Content will be dynamically added here using JavaScript -->
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const apiUrl = 'https://pokeapi.co/api/v2/pokemon/';
+
+      async function fetchPokemonDetails(pokemonId) {
+        try {
+          const response = await fetch(`${apiUrl}${pokemonId}`);
+          const data = await response.json();
+
+          // Create a card element
+          const card = document.getElementById('pokemon-details');
+          card.innerHTML = ''; // Clear previous content
+
+          // Display the Pokémon name
+          const nameElement = document.createElement('h1');
+          nameElement.textContent = data.name;
+
+          // Create a container for the image and types
+          const contentContainer = document.createElement('div');
+          contentContainer.classList.add('content-container');
+
+          // Display the Pokémon image
+          const imageElement = document.createElement('img');
+          imageElement.src = data.sprites.front_default;
+          imageElement.alt = data.name;
+          imageElement.classList.add('pokemon-image');
+
+          // Display the Pokémon types
+          const typesElement = document.createElement('div');
+          typesElement.classList.add('types-container');
+
+          data.types.forEach(type => {
+            const typeDiv = document.createElement('div');
+            typeDiv.textContent = type.type.name;
+            typeDiv.classList.add(type.type.name); // Add class with the name of the type
+            typesElement.appendChild(typeDiv);
+          });
+
+          // Display additional information
+          const descriptionElement = document.createElement('p');
+          descriptionElement.textContent = await fetchPokemonDescription(data.species.url);
+
+          const baseExperienceElement = document.createElement('p');
+          baseExperienceElement.textContent = `Base Experience: ${data.base_experience}`;
+
+          const abilitiesElement = document.createElement('p');
+          abilitiesElement.textContent = `Abilities: ${data.abilities.map(ability => ability.ability.name).join(', ')}`;
+
+          // Append elements to the content container
+          contentContainer.appendChild(imageElement);
+          contentContainer.appendChild(typesElement);
+
+
+          // Append elements to the card
+          card.appendChild(nameElement);
+          card.appendChild(contentContainer);
+
+          card.appendChild(descriptionElement);
+          card.appendChild(baseExperienceElement);
+          card.appendChild(abilitiesElement);
+
+        } catch (error) {
+          console.error('Error fetching Pokemon details:', error);
+        }
+      }
+
+      // Function to fetch Pokémon description
+      async function fetchPokemonDescription(speciesUrl) {
+        const speciesResponse = await fetch(speciesUrl);
+        const speciesData = await speciesResponse.json();
+        const flavorTextEntries = speciesData.flavor_text_entries.filter(entry => entry.language.name === 'en');
+        return flavorTextEntries[0].flavor_text;
+      }
+
+      // Get the Pokemon ID from the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const pokemonId = urlParams.get('id');
+
+      if (pokemonId) {
+        fetchPokemonDetails(pokemonId);
+      } else {
+        console.error('Pokemon ID not provided in the URL.');
+      }
+    });
+  </script>
+</body>
+</html>
